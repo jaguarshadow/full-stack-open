@@ -10,24 +10,23 @@ const App = () => {
   const handleGoodClick = () => {
     setGood(good + 1)
     setTotal(total + 1)
-    console.log(`good! ${good + 1}`)
   }
 
   const handleNeutralClick = () => {
     setNeutral(neutral + 1)
     setTotal(total + 1)
-    console.log(`neutral! ${neutral + 1}`)
   }
 
   const handleBadClick = () => {
     setBad(bad + 1)
     setTotal(total + 1)
-    console.log(`bad! ${bad + 1}`)
   }
 
   return (
     <>
+      <h1>give feedback</h1>
       <Feedback goodClick={handleGoodClick} neutralClick={handleNeutralClick} badClick={handleBadClick}/>
+      <h1>statistics</h1>
       <Statistics good={good} neutral={neutral} bad={bad} total={total} />
     </>
   )
@@ -42,7 +41,6 @@ const Button = ({ handleClick, text }) => (
 const Feedback = ({goodClick, neutralClick, badClick}) => {
   return (
     <div>
-      <h1>give feedback</h1>
       <p>
         <Button handleClick={goodClick} text='good' />
         <Button text='neutral' handleClick={neutralClick}/>
@@ -63,7 +61,6 @@ const Statistics = ({good, neutral, bad, total}) => {
   }
   return(
     <div>
-      <h1>statistics</h1>
       <table>
         <tbody>
           <StatisticsLine text="good" value={good} />

@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react'
 import pbService from './services/persons'
+import './index.css'
 
 const App = () => {
   const [persons, setPersons] = useState([])
   const [newName, setNewName] = useState('')
   const [newNumber, setNewNumber] = useState('')
   const [filter, setFilter] = useState('')
+  const [successLabel, setSuccessLabel] = useState(null)
+  const [errorLabel, setErrorLabel] = useState(null)
 
   useEffect(() => {
     pbService.getAll()
@@ -26,7 +29,9 @@ const App = () => {
       if (!replace) return
       var replacedPerson = {...existing, number: newNumber}
       pbService.update(replacedPerson.id, replacedPerson)
-        .then(test => {
+        .then(() => {
+          setSuccessLabel(`Updated ${replacedPerson.name}`)
+          setTimeout(() => setSuccessLabel(null), 5000)
           setPersons(persons.map(p => p.id != replacedPerson.id ? p : replacedPerson))
         })
     }
@@ -34,6 +39,8 @@ const App = () => {
       const person = { name: newName, number: newNumber }
       pbService.create(person)
         .then(newPerson => {
+          setSuccessLabel(`Added ${newPerson.name}`)
+          setTimeout(() => setSuccessLabel(null), 5000)
           setPersons(persons.concat(newPerson))
         })
     }
@@ -47,11 +54,18 @@ const App = () => {
       .then(() => {
         setPersons(persons.filter(x => x.id != person.id))
       })
+      .catch(() => {
+        setErrorLabel(`${person.name} already removed from server`)
+        setTimeout(() => setErrorLabel(null), 5000)
+        setPersons(persons.filter(p => p.id !== person.id))
+      })
   }
   
   return (
     <div>
       <h2>Phonebook</h2>
+      <Notification message={errorLabel} style='notif error'/>
+      <Notification message={successLabel} style='notif success'/>
       <Filter filter={filter} filterHandler={(event) => setFilter(event.target.value)}/>
       <h2>add a new</h2>
       <AddPersonForm 
@@ -93,5 +107,14 @@ const PersonList = ({toShow, deleteAction}) => (
       </p>)}
   </>
 )
+
+const Notification = ({message, style}) => {
+  if (message === null) return null
+  return (
+    <div className={style}>
+      {message}
+    </div>
+  )
+}
 
 export default App

@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react'
-import axios from 'axios'
+import pbService from './services/persons'
 
 const App = () => {
   const [persons, setPersons] = useState([])
@@ -8,12 +8,9 @@ const App = () => {
   const [filter, setFilter] = useState('')
 
   useEffect(() => {
-    console.log('effect')
-    axios
-      .get('http://localhost:3001/persons')
-      .then(response => {
-        console.log('promise fulfilled')
-        setPersons(response.data)
+    pbService.getAll()
+      .then(initalPersons => {
+        setPersons(initalPersons)
       })
     }, [])
 
@@ -23,15 +20,33 @@ const App = () => {
 
   const addPerson = (event) => {
     event.preventDefault()
-    if (persons.map(p => p.name).includes(newName)) {
-      alert(`${newName} is already added to the phonebook`);
-      return
+    var existing = persons.find(p => p.name == newName)
+    if (existing != undefined) {
+      var replace = window.confirm(`${newName} is already in the phonebook. Would you like to replace their number?`);
+      if (!replace) return
+      var replacedPerson = {...existing, number: newNumber}
+      pbService.update(replacedPerson.id, replacedPerson)
+        .then(test => {
+          setPersons(persons.map(p => p.id != replacedPerson.id ? p : replacedPerson))
+        })
     }
-    const person = { name: newName, number: newNumber }
-    var updated = persons.concat(person)
-    setPersons(updated)
+    else {
+      const person = { name: newName, number: newNumber }
+      pbService.create(person)
+        .then(newPerson => {
+          setPersons(persons.concat(newPerson))
+        })
+    }
     setNewName('')
     setNewNumber('')
+  }
+
+  const removePerson = (person) => {
+    if (!window.confirm(`Delete ${person.name}?`)) return;
+    pbService.remove(person.id)
+      .then(() => {
+        setPersons(persons.filter(x => x.id != person.id))
+      })
   }
   
   return (
@@ -47,7 +62,7 @@ const App = () => {
         numberChange={(event) => setNewNumber(event.target.value)}
       />
       <h2>Numbers</h2>
-      <PersonList toShow={peopleToShow} />
+      <PersonList toShow={peopleToShow} deleteAction={removePerson} />
     </div>
   )
 }
@@ -68,9 +83,14 @@ const Filter = ({filter, filterHandler}) => {
   )
 }
 
-const PersonList = ({toShow}) => (
+const PersonList = ({toShow, deleteAction}) => (
   <>
-    {toShow.map(p => <p key={p.id ?? p.name}>{p.name} {p.number}</p>)}
+    {toShow.map(p => 
+      <p key={p.id ?? p.name}>{p.name} {p.number} 
+        <button onClick={() => deleteAction(p)}>
+          delete
+        </button>
+      </p>)}
   </>
 )
 
